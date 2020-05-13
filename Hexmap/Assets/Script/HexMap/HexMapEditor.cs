@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -9,16 +8,17 @@ namespace Alpha.Dol
     {
         [SerializeField] public Color[] Colors;
         [SerializeField] public HexGrid HexGrid;
-        [SerializeField] public Toggle toggleColor;
-        [SerializeField] public Toggle toggleEvaluation;
         private Color _activeColor;
         private int _activeElevation;
+        private int _activeWaterLevel;
         private HexCell _previousCell;
         private HexDirection _dragDirection;
         private bool _isDrag;
         private bool _colorMode;
         private bool _evaluationMode;
+        private bool _waterMode;
         private OptionalToggle _riverMode = OptionalToggle.Invalid;
+        private OptionalToggle _roadMode = OptionalToggle.Invalid;
 
         public enum OptionalToggle
         {
@@ -29,8 +29,7 @@ namespace Alpha.Dol
         private void Awake()
         {
             SelectColor(0);
-            toggleColor.onValueChanged.AddListener(SetColorMode);
-            toggleEvaluation.onValueChanged.AddListener(SetEvaluationMode);
+            
         }
 
         private void Update()
@@ -81,16 +80,33 @@ namespace Alpha.Dol
                 cell.Evaluation = _activeElevation;
             }
 
+            if (_waterMode)
+            {
+                cell.WaterLevel = _activeWaterLevel;
+            }
+            
             if (_riverMode == OptionalToggle.No)
             {
                 cell.RemoveRiver();
             }
-            else if (_isDrag && _riverMode == OptionalToggle.Yes)
+
+            if (_roadMode == OptionalToggle.No)
+            {
+                cell.RemoveRoads();
+            }
+            else if (_isDrag)
             {
                 var otherCell = cell.GetNeighbor(_dragDirection.Opposite());
                 if (otherCell != null)
                 {
-                    otherCell.SetOutgoingRiver(_dragDirection);
+                    if (_riverMode == OptionalToggle.Yes)
+                    {
+                        otherCell.SetOutgoingRiver(_dragDirection);
+                    }
+                    if (_roadMode == OptionalToggle.Yes)
+                    {
+                        otherCell.AddRoad(_dragDirection);
+                    }
                 }
             }
         }
@@ -111,8 +127,7 @@ namespace Alpha.Dol
 
         public void SetElevation(float elevation)
         {
-            var slider = GetComponentInChildren<Slider>();
-            _activeElevation = (int) slider.value;
+            _activeElevation = (int)elevation;
         }
 
         public void SelectColor(int i)
@@ -125,14 +140,29 @@ namespace Alpha.Dol
             _riverMode = (OptionalToggle) i;
         }
 
-        private void SetColorMode(bool i)
+        public void SetRoadMode(int i)
+        {
+            _roadMode = (OptionalToggle) i;
+        }
+
+        public void SetColorMode(bool i)
         {
             _colorMode = i;
         }
 
-        private void SetEvaluationMode(bool arg0)
+        public void SetEvaluationMode(bool arg0)
         {
             _evaluationMode = arg0;
+        }
+
+        public void SetWaterMode(bool enable)
+        {
+            _waterMode = enable;
+        }
+
+        public void SetWaterLevel(float level)
+        {
+            _activeWaterLevel = (int)level;
         }
     }
 }

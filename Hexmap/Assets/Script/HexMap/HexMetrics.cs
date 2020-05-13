@@ -8,7 +8,9 @@ namespace Alpha.Dol
         public const float outerRadius = 10f;
         public const float innerRadius = outerRadius * outerToInner;
         public const float solidFactor = 0.75f;
+        public const float waterFactor = 0.5f;
         public const float blendFactor = 1 - solidFactor;
+        public const float waterBlendFactor = 1 - waterFactor;
         public const float elevationStep = 6f;
         public const int terracesPerSlop = 2;
         public const int terraceSteps = terracesPerSlop * 2 + 1;
@@ -20,7 +22,7 @@ namespace Alpha.Dol
         public const int chunkSizeZ = 5;
         public const float edgeOuterStep = 1f / 6;
         public const float streamBedElevationOffset = -1f;
-        public const float riverSurfaceElevationOffset = -0.3f;
+        public const float waterSurfaceElevationOffset = -0.3f;
         public const float outerToInner = 0.866025404f;
         public const float innerToOuter = 1f / outerToInner;
         
@@ -56,6 +58,16 @@ namespace Alpha.Dol
             return corners[(int) direction + 1] * solidFactor;
         }
 
+        public static Vector3 GetFirstWaterCorner(HexDirection direction)
+        {
+            return corners[(int) direction] * waterFactor;
+        }
+
+        public static Vector3 GetSecondWaterCorner(HexDirection direction)
+        {
+            return corners[(int) direction + 1] * solidFactor;
+        }
+
         public static Vector3 GetSolidEdgeMiddle(HexDirection direction)
         {
             return (corners[(int) direction] + corners[(int) direction + 1]) * (0.5f * solidFactor);
@@ -64,6 +76,11 @@ namespace Alpha.Dol
         public static Vector3 GetBridge(HexDirection direction)
         {
             return (corners[(int) direction] + corners[(int) direction + 1]) * blendFactor;
+        }
+
+        public static Vector3 GetWaterBridge(HexDirection direction)
+        {
+            return (corners[(int) direction] + corners[(int) direction + 1]) * waterBlendFactor;
         }
 
         public static Vector3 GetTerracePosition(Vector3 startPosition, Vector3 endPosition, int step)
@@ -101,8 +118,8 @@ namespace Alpha.Dol
         public static Vector3 Perturb(Vector3 position)
         {
             var sample = HexMetrics.SampleNoise(position);
-            // position.x += (sample.x * 2f - 1f) * HexMetrics.cellPerturbStrength;
-            // position.z += (sample.z * 2f - 1f) * HexMetrics.cellPerturbStrength;
+            position.x += (sample.x * 2f - 1f) * HexMetrics.cellPerturbStrength;
+            position.z += (sample.z * 2f - 1f) * HexMetrics.cellPerturbStrength;
             return position;
         }
     }

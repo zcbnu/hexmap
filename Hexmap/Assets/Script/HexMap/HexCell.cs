@@ -44,18 +44,42 @@ namespace Alpha.Dol
                 {
                     RemoveIncomingRiver();
                 }
+
+                for (var i = 0; i < roads.Length; i++)
+                {
+                    if (roads[i] && GetEdgeType(GetNeighbor((HexDirection) i)) == HexEdgeType.Cliff)
+                    {
+                        SetRoad(i, false);
+                    }
+                }
+                
                 Refresh();
             }
         }
 
+        public int WaterLevel
+        {
+            get { return _waterLevel; }
+            set
+            {
+                if (_waterLevel == value) return;
+                _waterLevel = value;
+                Refresh();
+            }
+        }
+
+        public bool IsUnderWater => _waterLevel > _evaluation;
+
         public float StreamBedY => (_evaluation + HexMetrics.streamBedElevationOffset) * HexMetrics.elevationStep;
 
-        public float RiverSurfaceY => (_evaluation + HexMetrics.riverSurfaceElevationOffset) * HexMetrics.elevationStep;
+        public float RiverSurfaceY => (_evaluation + HexMetrics.waterSurfaceElevationOffset) * HexMetrics.elevationStep;
+        public float WaterSurfaceY => (_waterLevel + HexMetrics.waterSurfaceElevationOffset) * HexMetrics.elevationStep;
         
         [SerializeField] public HexCell[] neighbors;
         [SerializeField] public bool[] roads;
         public Vector3 Position => transform.localPosition;
-        
+
+        private int _waterLevel;
         private int _evaluation;
         private Color _color;
         private bool _hasIncomingRiver, _hasOutgoingRiver;
@@ -106,6 +130,7 @@ namespace Alpha.Dol
         public bool HasRiver => _hasIncomingRiver || _hasOutgoingRiver;
         public HexDirection IncomingRiver => _incomingRiver;
         public HexDirection OutgoingRiver => _outgoingRiver;
+        public HexDirection RiverBeginOrEndDirection => _hasIncomingRiver ? _incomingRiver : _outgoingRiver;
         public bool HasRiverBeginOrEnd => _hasIncomingRiver != _hasOutgoingRiver;
         public bool HasRiverThroughEdge(HexDirection direction)
         {
@@ -156,12 +181,12 @@ namespace Alpha.Dol
             
             _hasOutgoingRiver = true;
             _outgoingRiver = direction;
-            Refresh();
             
             neighbor.RemoveIncomingRiver();
             neighbor._hasIncomingRiver = true;
             neighbor._incomingRiver = direction.Opposite();
-            neighbor.RefreshSelf();
+            
+            SetRoad((int) direction, false);
         }
 
         #endregion
@@ -188,7 +213,7 @@ namespace Alpha.Dol
 
         public void AddRoad(HexDirection direction)
         {
-            if (!roads[(int) direction])
+            if (!roads[(int) direction] && !HasRiverThroughEdge(direction) && GetEdgeType(GetNeighbor(direction)) != HexEdgeType.Cliff)
             {
                 SetRoad((int) direction, true);
             }
@@ -196,9 +221,9 @@ namespace Alpha.Dol
 
         private void SetRoad(int i, bool state)
         {
-            roads[i] = false;
+            roads[i] = state;
             var opposite = ((HexDirection) i).Opposite();
-            if (neighbors[i] != null) neighbors[i].roads[(int) opposite] = false;
+            if (neighbors[i] != null) neighbors[i].roads[(int) opposite] = state;
             neighbors[i].RefreshSelf();
             RefreshSelf();
         }
