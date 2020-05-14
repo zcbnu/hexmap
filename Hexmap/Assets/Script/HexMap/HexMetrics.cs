@@ -65,7 +65,7 @@ namespace Alpha.Dol
 
         public static Vector3 GetSecondWaterCorner(HexDirection direction)
         {
-            return corners[(int) direction + 1] * solidFactor;
+            return corners[(int) direction + 1] * waterFactor;
         }
 
         public static Vector3 GetSolidEdgeMiddle(HexDirection direction)

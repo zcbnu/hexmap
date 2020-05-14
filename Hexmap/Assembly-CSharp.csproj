@@ -71,6 +71,7 @@
      <Compile Include="Assets\Script\HexMap\HexMesh.cs" />
      <Compile Include="Assets\Script\HexMap\HexMetrics.cs" />
      <Compile Include="Assets\Script\HexMap\ListPool.cs" />
+     <None Include="Assets\PackRes\HexMap\Estuary.shader" />
      <None Include="Assets\PackRes\HexMap\Water.shader" />
      <None Include="Assets\PackRes\HexMap\FlowingRiver.shader" />
      <None Include="Assets\Script\HexMap\HexMapVertexColor.shader" />

@@ -15,9 +15,11 @@ namespace Alpha.Dol
         private List<Vector3> _vertices;
         private List<Color> _colors;
         private List<Vector2> _uvs;
+        private List<Vector2> _uv2s;
         public bool UseCollider;
         public bool UseColor;
         public bool UseUV;
+        public bool UseUV2;
         private void Awake()
         {
             _mesh = GetComponent<MeshFilter>().mesh = new Mesh();
@@ -40,6 +42,11 @@ namespace Alpha.Dol
             {
                 _uvs = ListPool<Vector2>.Get();
             }
+
+            if (UseUV2)
+            {
+                _uv2s = ListPool<Vector2>.Get();
+            }
         }
 
         public void Apply()
@@ -57,6 +64,12 @@ namespace Alpha.Dol
             {
                 _mesh.SetUVs(0, _uvs);
                 ListPool<Vector2>.Put(_uvs);
+            }
+
+            if (UseUV2)
+            {
+                _mesh.SetUVs(1, _uv2s);
+                ListPool<Vector2>.Put(_uv2s);
             }
             _mesh.RecalculateNormals();
             if (UseCollider)
@@ -116,6 +129,22 @@ namespace Alpha.Dol
             _triangles.Add(index + 3);
         }
 
+        public void AddQuadUnperturb(Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4)
+        {
+            var index = _vertices.Count;
+            
+            _vertices.Add(v1);
+            _vertices.Add(v2);
+            _vertices.Add(v3);
+            _vertices.Add(v4);
+            _triangles.Add(index);
+            _triangles.Add(index + 2);
+            _triangles.Add(index + 1);
+            _triangles.Add(index + 1);
+            _triangles.Add(index + 2);
+            _triangles.Add(index + 3);
+        }
+
         public void AddTriangleUV(Vector2 uv1, Vector2 uv2, Vector2 uv3)
         {
             _uvs.Add(uv1);
@@ -137,6 +166,29 @@ namespace Alpha.Dol
             _uvs.Add(new Vector2(uMax, vMin));
             _uvs.Add(new Vector2(uMin, vMax));
             _uvs.Add(new Vector2(uMax, vMax));
+        }
+        
+        public void AddTriangleUV2(Vector2 uv1, Vector2 uv2, Vector2 uv3)
+        {
+            _uv2s.Add(uv1);
+            _uv2s.Add(uv2);
+            _uv2s.Add(uv3);
+        }
+
+        public void AddQuadUV2(Vector2 uv1, Vector2 uv2, Vector2 uv3, Vector2 uv4)
+        {
+            _uv2s.Add(uv1);
+            _uv2s.Add(uv2);
+            _uv2s.Add(uv3);
+            _uv2s.Add(uv4);
+        }
+
+        public void AddQuadUV2(float uMin, float uMax, float vMin, float vMax)
+        {
+            _uv2s.Add(new Vector2(uMin, vMin));
+            _uv2s.Add(new Vector2(uMax, vMin));
+            _uv2s.Add(new Vector2(uMin, vMax));
+            _uv2s.Add(new Vector2(uMax, vMax));
         }
 
         public void AddTriangle(Vector3 v1, Vector3 v2, Vector3 v3)

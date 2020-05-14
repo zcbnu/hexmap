@@ -53,7 +53,7 @@
             float4 noise2 = tex2D(_MainTex, uv2);
             fixed4 c = saturate(_Color + (noise.r * noise2.a));
             ***/
-            float shore = sqrt(IN.uv_MainTex.y);
+            float shore = sqrt(IN.uv_MainTex.y) * 0.9;
             float foam = Foam(shore, IN.worldPos.xz, _MainTex);
             float wave = Waves(IN.worldPos.xz, _MainTex);
             wave *= 1 - shore;

@@ -35,15 +35,7 @@ namespace Alpha.Dol
                 // pos.y += (HexMetrics.SampleNoise(pos).y * 2f - 1f) * HexMetrics.elevationPerturbStrength;
                 transform.localPosition = pos;
 
-                if (_hasOutgoingRiver && _evaluation < GetNeighbor(_outgoingRiver)._evaluation)
-                {
-                    RemoveOutgoingRiver();
-                }
-
-                if (_hasIncomingRiver && _evaluation > GetNeighbor(_incomingRiver)._evaluation)
-                {
-                    RemoveIncomingRiver();
-                }
+                ValidateRivers();
 
                 for (var i = 0; i < roads.Length; i++)
                 {
@@ -64,6 +56,7 @@ namespace Alpha.Dol
             {
                 if (_waterLevel == value) return;
                 _waterLevel = value;
+                ValidateRivers();
                 Refresh();
             }
         }
@@ -171,7 +164,7 @@ namespace Alpha.Dol
             if (_hasOutgoingRiver && _outgoingRiver == direction) return;
 
             var neighbor = GetNeighbor(direction);
-            if (neighbor == null || neighbor.Evaluation > Evaluation) return;
+            if (!IsRiverValidDestination(neighbor)) return;
             
             RemoveOutgoingRiver();
             if (_hasIncomingRiver && _incomingRiver == direction)
@@ -226,6 +219,24 @@ namespace Alpha.Dol
             if (neighbors[i] != null) neighbors[i].roads[(int) opposite] = state;
             neighbors[i].RefreshSelf();
             RefreshSelf();
+        }
+
+        bool IsRiverValidDestination(HexCell neighbor)
+        {
+            return neighbor != null && (_evaluation >= neighbor._evaluation || _waterLevel == neighbor._evaluation);
+        }
+
+        void ValidateRivers()
+        {
+            if (_hasOutgoingRiver && !IsRiverValidDestination(GetNeighbor(_outgoingRiver)))
+            {
+                RemoveOutgoingRiver();
+            }
+
+            if (_hasIncomingRiver && !GetNeighbor(_incomingRiver).IsRiverValidDestination(this))
+            {
+                RemoveIncomingRiver();
+            }
         }
         
         #endregion
