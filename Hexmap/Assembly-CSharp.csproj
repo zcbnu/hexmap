@@ -72,11 +72,13 @@
      <Compile Include="Assets\Script\HexMap\HexMetrics.cs" />
      <Compile Include="Assets\Script\HexMap\ListPool.cs" />
      <Compile Include="Assets\Script\HexMap\NewMapMenu.cs" />
+     <Compile Include="Assets\Script\HexMap\TextureArrayWizard.cs" />
      <Compile Include="Assets\Script\MapExtension.cs" />
      <None Include="Assets\PackRes\HexMap\Estuary.shader" />
      <None Include="Assets\PackRes\HexMap\Water.shader" />
      <None Include="Assets\PackRes\HexMap\FlowingRiver.shader" />
-     <None Include="Assets\Script\HexMap\HexMapVertexColor.shader" />
+     <None Include="Assets\PackRes\HexMap\Terrain.shader" />
+     <None Include="Assets\PackRes\HexMap\HexMapVertexColor.shader" />
      <None Include="Assets\PackRes\HexMap\Water.cginc" />
      <None Include="Assets\PackRes\HexMap\WaterShore.shader" />
      <None Include="Assets\PackRes\HexMap\Road.shader" />

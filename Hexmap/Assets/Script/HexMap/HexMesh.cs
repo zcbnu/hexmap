@@ -16,10 +16,12 @@ namespace Alpha.Dol
         private List<Color> _colors;
         private List<Vector2> _uvs;
         private List<Vector2> _uv2s;
+        private List<Vector3> _terrainTypes;
         public bool UseCollider;
         public bool UseColor;
         public bool UseUV;
         public bool UseUV2;
+        public bool UseTerrainTypes;
         private void Awake()
         {
             _mesh = GetComponent<MeshFilter>().mesh = new Mesh();
@@ -47,6 +49,11 @@ namespace Alpha.Dol
             {
                 _uv2s = ListPool<Vector2>.Get();
             }
+
+            if (UseTerrainTypes)
+            {
+                _terrainTypes = ListPool<Vector3>.Get();
+            }
         }
 
         public void Apply()
@@ -71,6 +78,11 @@ namespace Alpha.Dol
                 _mesh.SetUVs(1, _uv2s);
                 ListPool<Vector2>.Put(_uv2s);
             }
+
+            if (UseTerrainTypes)
+            {
+                _mesh.SetUVs(2, _terrainTypes);
+            }
             _mesh.RecalculateNormals();
             if (UseCollider)
             {
@@ -89,6 +101,20 @@ namespace Alpha.Dol
             _colors.Add(color1);
             _colors.Add(color2);
             _colors.Add(color3);
+        }
+
+        public void AddTriangleTerrainTypes(Vector3 types)
+        {
+            _terrainTypes.Add(types);
+            _terrainTypes.Add(types);
+            _terrainTypes.Add(types);
+        }
+        public void AddQuadTerrainTypes(Vector3 types)
+        {
+            _terrainTypes.Add(types);
+            _terrainTypes.Add(types);
+            _terrainTypes.Add(types);
+            _terrainTypes.Add(types);
         }
         public void AddQuadColor(Color color1)
         {

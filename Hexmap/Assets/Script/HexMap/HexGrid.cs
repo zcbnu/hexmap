@@ -7,7 +7,6 @@ namespace Alpha.Dol
     public class HexGrid : MonoBehaviour
     {
         [SerializeField] public int DefaultColorIndex;
-        [SerializeField] public Color[] Colors;
         [SerializeField] public HexCell HexCellPrefab;
         [SerializeField] public Text HexLabelPrefab;
         [SerializeField] public HexGridChunk HexGridChunkPrefab;
@@ -21,7 +20,6 @@ namespace Alpha.Dol
         private void Awake()
         {
             HexMetrics.noiseSource = noiseSource;
-            HexMetrics.colors = Colors;
 
             CreateMap(CellCountX, CellCountZ);
         }

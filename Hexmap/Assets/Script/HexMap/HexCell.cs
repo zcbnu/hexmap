@@ -10,8 +10,6 @@ namespace Alpha.Dol
         public HexGridChunk Chunk;
         public RectTransform uiRect;
 
-        public Color Color => HexMetrics.colors[_terrainTypeIndex];
-
         public int TerrainTypeIndex
         {
             get => _terrainTypeIndex;
