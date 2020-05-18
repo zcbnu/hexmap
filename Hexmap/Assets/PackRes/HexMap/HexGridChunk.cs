@@ -662,7 +662,6 @@ namespace Alpha.Dol
             Vector3 left, HexCell leftCell,
             Vector3 right, HexCell rightCell)
         {
-            Debug.Log($"Triangulate corner {bottom} {left} {right}");
             var leftEdge = bottomCell.GetEdgeType(leftCell);
             var rightEdge = bottomCell.GetEdgeType(rightCell);
             var topEdge = leftCell.GetEdgeType(rightCell);

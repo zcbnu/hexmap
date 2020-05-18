@@ -1,3 +1,4 @@
+using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -5,34 +6,52 @@ namespace Alpha.Dol
 {
     public class HexGrid : MonoBehaviour
     {
-        [SerializeField] public Color DefaultColor;
+        [SerializeField] public int DefaultColorIndex;
+        [SerializeField] public Color[] Colors;
         [SerializeField] public HexCell HexCellPrefab;
         [SerializeField] public Text HexLabelPrefab;
         [SerializeField] public HexGridChunk HexGridChunkPrefab;
         [SerializeField] public Texture2D noiseSource;
-        [SerializeField] public int ChunkCountX;
-        [SerializeField] public int ChunkCountZ;
+        [SerializeField] public int CellCountX;
+        [SerializeField] public int CellCountZ;
 
+        protected int ChunkCountX, ChunkCountZ;
         private HexCell[] _cells;
         private HexGridChunk[] _chunks;
         private void Awake()
         {
             HexMetrics.noiseSource = noiseSource;
+            HexMetrics.colors = Colors;
 
-            CreateChunks();
-            _cells = new HexCell[ChunkCountX * ChunkCountZ * HexMetrics.chunkSizeX * HexMetrics.chunkSizeZ];
-            for (int z = 0, i = 0; z < ChunkCountZ * HexMetrics.chunkSizeZ; z++)
-            {
-                for (int x = 0; x < ChunkCountX * HexMetrics.chunkSizeX; x++)
-                {
-                    CreateCell(x, z, i++);
-                }
-            }
+            CreateMap(CellCountX, CellCountZ);
         }
 
         private void OnEnable()
         {
             HexMetrics.noiseSource = noiseSource;
+        }
+
+        public bool CreateMap(int x, int z)
+        {
+            if (_chunks != null)
+            {
+                foreach (var gridChunk in _chunks)
+                {
+                    Destroy(gridChunk.gameObject);
+                }
+            }
+            if (x <= 0 || x % HexMetrics.chunkSizeX != 0 || z <= 0 || z % HexMetrics.chunkSizeZ != 0)
+            {
+                Debug.LogError("Unsupported map");
+                return false;
+            }
+            CellCountX = x;
+            CellCountZ = z;
+            ChunkCountX = x / HexMetrics.chunkSizeX;
+            ChunkCountZ = z / HexMetrics.chunkSizeZ;
+            CreateChunks();
+            CreateCells();
+            return true;
         }
 
         private void CreateChunks()
@@ -49,6 +68,18 @@ namespace Alpha.Dol
             }
         }
 
+        private void CreateCells()
+        {
+            _cells = new HexCell[ChunkCountX * ChunkCountZ * HexMetrics.chunkSizeX * HexMetrics.chunkSizeZ];
+            for (int z = 0, i = 0; z < ChunkCountZ * HexMetrics.chunkSizeZ; z++)
+            {
+                for (int x = 0; x < ChunkCountX * HexMetrics.chunkSizeX; x++)
+                {
+                    CreateCell(x, z, i++);
+                }
+            }
+        }
+
         private void CreateCell(int x, int z, int i)
         {
             Vector3 pos;
@@ -58,7 +89,7 @@ namespace Alpha.Dol
             var cell = _cells[i] = Instantiate<HexCell>(HexCellPrefab);
             cell.transform.localPosition = pos;
             cell.HexCoordinate = HexCoordinate.CreateFromOffset(x, z);
-            cell.Color = DefaultColor;
+            cell.TerrainTypeIndex = this.DefaultColorIndex;
             if (x > 0)
             {
                 cell.SetNeighbor(HexDirection.W, _cells[i-1]);
@@ -113,6 +144,39 @@ namespace Alpha.Dol
             var coordinates = HexCoordinate.CreateFromPosition(position);
             var index = coordinates.X + coordinates.Z * ChunkCountX * HexMetrics.chunkSizeX + coordinates.Z / 2;
             return _cells[index];
+        }
+
+        public void Save(BinaryWriter writer)
+        {
+            writer.Write(CellCountX);
+            writer.Write(CellCountZ);
+            for (var i = 0; i < _cells.Length; i++)
+            {
+                _cells[i].Save(writer);
+            }
+        }
+
+        public void Load(BinaryReader reader)
+        {
+            var x = reader.ReadInt32();
+            var z = reader.ReadInt32();
+            var success = CreateMap(x, z);
+
+            if (!success)
+            {
+                Debug.LogError("Map create failed");
+                return;
+            }
+            
+            for (var i = 0; i < _cells.Length; i++)
+            {
+                _cells[i].Load(reader);
+            }
+
+            foreach (var gridChunk in _chunks)
+            {
+                gridChunk.Refresh();
+            }
         }
     }
 }

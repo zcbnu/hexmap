@@ -38,6 +38,8 @@ namespace Alpha.Dol
 
         public static Texture2D noiseSource;
 
+        public static Color[] colors;
+
         public static Vector3 GetFirstCorner(HexDirection direction)
         {
             return corners[(int) direction];

@@ -1,3 +1,4 @@
+using System.IO;
 using System.Linq;
 using UnityEngine;
 
@@ -9,15 +10,18 @@ namespace Alpha.Dol
         public HexGridChunk Chunk;
         public RectTransform uiRect;
 
-        public Color Color
-        {
-            get { return _color;  }
+        public Color Color => HexMetrics.colors[_terrainTypeIndex];
 
+        public int TerrainTypeIndex
+        {
+            get => _terrainTypeIndex;
             set
             {
-                if (_color == value) return;
-                _color = value;
-                Refresh();
+                if (_terrainTypeIndex != value)
+                {
+                    _terrainTypeIndex = value;
+                    Refresh();
+                }
             }
         }
 
@@ -30,11 +34,7 @@ namespace Alpha.Dol
                 if (_evaluation == value) return;
                 
                 _evaluation = value;
-                var pos = transform.localPosition;
-                pos.y = value * HexMetrics.elevationStep;
-                // pos.y += (HexMetrics.SampleNoise(pos).y * 2f - 1f) * HexMetrics.elevationPerturbStrength;
-                transform.localPosition = pos;
-
+                RefreshPosition();
                 ValidateRivers();
 
                 for (var i = 0; i < roads.Length; i++)
@@ -67,17 +67,21 @@ namespace Alpha.Dol
 
         public float RiverSurfaceY => (_evaluation + HexMetrics.waterSurfaceElevationOffset) * HexMetrics.elevationStep;
         public float WaterSurfaceY => (_waterLevel + HexMetrics.waterSurfaceElevationOffset) * HexMetrics.elevationStep;
-        
-        [SerializeField] public HexCell[] neighbors;
-        [SerializeField] public bool[] roads;
         public Vector3 Position => transform.localPosition;
 
+        #region data
+
+        [SerializeField] public HexCell[] neighbors;
+        [SerializeField] public bool[] roads;
+
+        private int _terrainTypeIndex;
         private int _waterLevel;
         private int _evaluation;
-        private Color _color;
         private bool _hasIncomingRiver, _hasOutgoingRiver;
         private HexDirection _incomingRiver, _outgoingRiver;
-
+        
+        #endregion
+        
         public HexCell GetNeighbor(HexDirection direction)
         {
             return neighbors[(int) direction];
@@ -94,6 +98,18 @@ namespace Alpha.Dol
             cell.neighbors[(int) direction.Opposite()] = this;
         }
 
+        private void RefreshPosition()
+        {
+            var position = transform.localPosition;
+            position.y = _evaluation * HexMetrics.elevationStep;
+            position.y += (HexMetrics.SampleNoise(position).y * 2f - 1) * HexMetrics.elevationPerturbStrength;
+            transform.localPosition = position;
+
+            var uiPosition = uiRect.localPosition;
+            uiPosition.z = -position.y;
+            uiRect.localPosition = uiPosition;
+        }
+        
         public void Refresh()
         {
             if (!Chunk) return;
@@ -236,6 +252,58 @@ namespace Alpha.Dol
             if (_hasIncomingRiver && !GetNeighbor(_incomingRiver).IsRiverValidDestination(this))
             {
                 RemoveIncomingRiver();
+            }
+        }
+        
+        #endregion
+
+        #region Serialize
+
+        public void Save(BinaryWriter writer)
+        {
+            writer.Write((byte)_terrainTypeIndex);
+            writer.Write((byte)_evaluation);
+            writer.Write((byte)_waterLevel);
+            writer.Write((byte)(_hasIncomingRiver ? (_incomingRiver + 128) : 0));
+            writer.Write((byte)(_hasOutgoingRiver ? (_outgoingRiver + 128) : 0));
+            int roadFlags = 0;
+            for (var i = 0; i < roads.Length; i++)
+            {
+                if (roads[i]) roadFlags |= 1 << i;
+            }
+            writer.Write((byte)roadFlags);
+        }
+
+        public void Load(BinaryReader reader)
+        {
+            _terrainTypeIndex = reader.ReadByte();
+            _evaluation = reader.ReadByte();
+            _waterLevel = reader.ReadByte();
+            var riverByte = reader.ReadByte();
+            if (riverByte >= 128)
+            {
+                _hasIncomingRiver = true;
+                _incomingRiver = (HexDirection) (riverByte - 128);
+            }
+            else
+            {
+                _hasIncomingRiver = false;
+            }
+            riverByte = reader.ReadByte();
+            if (riverByte >= 128)
+            {
+                _hasOutgoingRiver = true;
+                _outgoingRiver = (HexDirection) (riverByte - 128);
+            }
+            else
+            {
+                _hasOutgoingRiver = false;
+            }
+            RefreshPosition();
+            var roadFlag = reader.ReadByte();
+            for (var i = 0; i < roads.Length; i++)
+            {
+                roads[i] = (roadFlag & (1 << i)) != 0;
             }
         }
         

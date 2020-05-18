@@ -15,6 +15,7 @@ namespace Alpha.Dol
         [SerializeField] public float MoveSpeedMinZoom;
         [SerializeField] public float MoveSpeedMaxZoom;
         [SerializeField] public float RotateSpeed;
+        private static HexCamera _instance;
         private Vector3 _position;
         private Quaternion _quaternion;
         private Stack<Tuple<Vector3, Quaternion>> _stack = new Stack<Tuple<Vector3, Quaternion>>();
@@ -24,8 +25,19 @@ namespace Alpha.Dol
         private float _rotateAngle;
         private void Awake()
         {
+            _instance = this;
             _swivel = transform.GetChild(0);
             _stick = _swivel.GetChild(0);
+        }
+
+        public static void ValidatePosition()
+        {
+            _instance.AdjustPosition(0,0);
+        }
+
+        public static bool Locked
+        {
+            set { _instance.enabled = !value; }
         }
 
         private void Update()
@@ -44,7 +56,7 @@ namespace Alpha.Dol
 
             var x = Input.GetAxis("Horizontal");
             var z = Input.GetAxis("Vertical");
-            if (Math.Abs(x) > Mathf.Epsilon)
+            if (Math.Abs(x) > Mathf.Epsilon || Math.Abs(z) > Mathf.Epsilon)
             {
                 AdjustPosition(x, z);
             }
@@ -61,8 +73,8 @@ namespace Alpha.Dol
 
         private Vector3 ClampPosition(Vector3 pos)
         {
-            var xMax = (_hexGrid.ChunkCountX * HexMetrics.chunkSizeX - 0.5f) * 2f * HexMetrics.innerRadius;
-            var zMax = (_hexGrid.ChunkCountZ * HexMetrics.chunkSizeZ - 0.5f) * 1.5f * HexMetrics.outerRadius;
+            var xMax = (_hexGrid.CellCountX - 0.5f) * 2f * HexMetrics.innerRadius;
+            var zMax = (_hexGrid.CellCountZ - 0.5f) * 1.5f * HexMetrics.outerRadius;
             pos.x = Mathf.Clamp(pos.x, 0, xMax);
             pos.z = Mathf.Clamp(pos.z, 0, zMax);
             return pos;

@@ -1,3 +1,4 @@
+using System.IO;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -6,9 +7,8 @@ namespace Alpha.Dol
 {
     public class HexMapEditor : MonoBehaviour
     {
-        [SerializeField] public Color[] Colors;
         [SerializeField] public HexGrid HexGrid;
-        private Color _activeColor;
+        private int _activeColorIndex;
         private int _activeElevation;
         private int _activeWaterLevel;
         private HexCell _previousCell;
@@ -72,7 +72,7 @@ namespace Alpha.Dol
         {
             if (_colorMode)
             {
-                cell.Color = _activeColor;
+                cell.TerrainTypeIndex = _activeColorIndex;
             }
 
             if (_evaluationMode)
@@ -132,7 +132,7 @@ namespace Alpha.Dol
 
         public void SelectColor(int i)
         {
-            _activeColor = Colors[i];
+            _activeColorIndex = i;
         }
 
         public void SetRiverMode(int i)
@@ -163,6 +163,39 @@ namespace Alpha.Dol
         public void SetWaterLevel(float level)
         {
             _activeWaterLevel = (int)level;
+        }
+
+        public void Save()
+        {
+            var path = Path.Combine(Application.temporaryCachePath, "test.map");
+            using (var writer = new BinaryWriter(File.Open(path, FileMode.Create)))
+            {
+                writer.Write(0);
+                HexGrid.Save(writer);
+                Debug.Log("Save map success");
+                writer.Dispose();
+            }
+        }
+
+        public void Load()
+        {
+            var path = Path.Combine(Application.temporaryCachePath, "test.map");
+            using (var reader = new BinaryReader(File.OpenRead(path)))
+            {
+                var header = reader.ReadInt32();
+
+                if (header == 0)
+                {
+                    HexGrid.Load(reader);
+                    HexCamera.ValidatePosition();
+                }
+                else
+                {
+                    Debug.LogError($"Unknown map format {header}");
+                }
+                reader.Dispose();
+                Debug.Log("Load map success");
+            }
         }
     }
 }
