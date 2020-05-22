@@ -22,6 +22,7 @@ namespace Alpha.Dol
         {
             _gridCanvas = GetComponentInChildren<Canvas>();
             _cells = new HexCell[HexMetrics.chunkSizeX * HexMetrics.chunkSizeZ];
+            ShowUI(false);
         }
 
         private void Start()
@@ -887,6 +888,11 @@ namespace Alpha.Dol
             // _terrain.AddQuadColor(c3, c4, endLeftCell.Color, endRightCell.Color);
             _terrain.AddQuadColor(c3, c4, sColor2, sColor3);
             _terrain.AddQuadTerrainTypes(types);
+        }
+
+        public void ShowUI(bool enable)
+        {
+            _gridCanvas.gameObject.SetActive(enable);
         }
     }
 }

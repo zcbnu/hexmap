@@ -1,5 +1,9 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.PlayerLoop;
 using UnityEngine.UI;
 
 namespace Alpha.Dol
@@ -156,6 +160,7 @@ namespace Alpha.Dol
 
         public void Load(BinaryReader reader)
         {
+            StopAllCoroutines();
             var x = reader.ReadInt32();
             var z = reader.ReadInt32();
             var success = CreateMap(x, z);
@@ -175,6 +180,86 @@ namespace Alpha.Dol
             {
                 gridChunk.Refresh();
             }
+        }
+
+        public IEnumerator Search(HexCell fromCell, HexCell toCell)
+        {
+            foreach (var cell in _cells)
+            {
+                cell.Distance = Int32.MaxValue;
+                cell.DisableHighlight();
+            }
+            fromCell.EnableHighLight(Color.blue);
+            toCell.EnableHighLight(Color.red);
+            var delay = new WaitForSeconds( 1 / 60f);
+            
+            var queue = new HexCellPriorityQueue();
+            fromCell.Distance = 0;
+            queue.Enqueue(fromCell);
+            while (queue.Count > 0)
+            {
+                yield return delay;
+                var cell = queue.Dequeue();
+                for (HexDirection d = HexDirection.NE; d <= HexDirection.NW; d++)
+                {
+                    var cellNeighbor = cell.GetNeighbor(d);
+                    if (cellNeighbor == null) continue;
+                    var edgeType = cell.GetEdgeType(cellNeighbor);
+                    if (cellNeighbor.IsUnderWater) continue;
+                    if (edgeType == HexEdgeType.Cliff) continue;
+
+                    var distance = cell.Distance;
+                    if (cell.HasRoadThroughEdge(d))
+                    {
+                        distance = cell.Distance + 1;
+                    }
+                    else
+                    {
+                        distance = cell.Distance + edgeType == HexEdgeType.Flat ? 5 : 10;
+                    }
+
+                    if (cellNeighbor.Distance == Int32.MaxValue)
+                    {
+                        cellNeighbor.Distance = distance;
+                        cellNeighbor.FromCell = cell;
+                        cellNeighbor.SearchHeuristic = cellNeighbor.HexCoordinate.DistanceTo(toCell.HexCoordinate);
+                        queue.Enqueue(cellNeighbor);
+                    }
+                    else if (distance < cellNeighbor.Distance)
+                    {
+                        var oldPriority = cellNeighbor.SearchPriority;
+                        cellNeighbor.Distance = distance;
+                        cellNeighbor.FromCell = cell;
+                        queue.ChangePriority(cellNeighbor, oldPriority);
+                    }
+
+                    if (cell == toCell)
+                    {
+                        cell = cell.FromCell;
+                        while (cell != fromCell)
+                        {
+                            cell.EnableHighLight(Color.white);
+                            cell = cell.FromCell;
+                        }
+
+                        yield break;
+                    }
+                }
+            }
+        }
+
+        public void ShowUI(bool enable)
+        {
+            foreach (var chunk in _chunks)
+            {
+                chunk.ShowUI(enable);
+            }
+        }
+
+        public void FindPath(HexCell hexCell, HexCell toCell)
+        {
+            StopAllCoroutines();
+            StartCoroutine(Search(hexCell, toCell));
         }
     }
 }

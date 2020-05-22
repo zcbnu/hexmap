@@ -60,5 +60,12 @@ namespace Alpha.Dol
         {
             return $"{X}\n{Y}\n{Z}";
         }
+
+        public int DistanceTo(HexCoordinate coordinate)
+        {
+            return ((x < coordinate.x ? coordinate.x - this.x : this.x - coordinate.x) 
+                   + (Y < coordinate.Y ? coordinate.Y - this.Y : this.Y - coordinate.Y) 
+                   + (Z < coordinate.z ? coordinate.z - this.z : this.z - coordinate.z)) / 2;
+        }
     }
 }

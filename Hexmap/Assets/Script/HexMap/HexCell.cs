@@ -1,6 +1,8 @@
+using System;
 using System.IO;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Alpha.Dol
 {
@@ -67,19 +69,52 @@ namespace Alpha.Dol
         public float WaterSurfaceY => (_waterLevel + HexMetrics.waterSurfaceElevationOffset) * HexMetrics.elevationStep;
         public Vector3 Position => transform.localPosition;
 
+        public int Distance
+        {
+            get => _distance;
+            set
+            {
+                _distance = value;
+                UpdateDistanceLabel();
+            }
+        }
+
+        public int SearchPriority
+        {
+            get => _distance + SearchHeuristic;
+        }
+
+        public int SearchHeuristic;
+
+        public HexCell FromCell;
+        public HexCell NextSearchCell;
+
         #region data
 
         [SerializeField] public HexCell[] neighbors;
+
         [SerializeField] public bool[] roads;
 
         private int _terrainTypeIndex;
+
         private int _waterLevel;
+
         private int _evaluation;
+
+        private int _distance;
+
         private bool _hasIncomingRiver, _hasOutgoingRiver;
+
         private HexDirection _incomingRiver, _outgoingRiver;
-        
+
         #endregion
-        
+
+        private void UpdateDistanceLabel()
+        {
+            var label = uiRect.GetComponentInChildren<Text>();
+            label.text = _distance == Int32.MaxValue ?"": _distance.ToString();
+        }
+
         public HexCell GetNeighbor(HexDirection direction)
         {
             return neighbors[(int) direction];
@@ -306,5 +341,18 @@ namespace Alpha.Dol
         }
         
         #endregion
+
+        public void EnableHighLight(Color color)
+        {
+            var highlight = uiRect.GetChild(0).GetComponent<Image>();
+            highlight.color = color;
+            highlight.enabled = true;
+        }
+
+        public void DisableHighlight()
+        {
+            var highlight = uiRect.GetChild(0).GetComponent<Image>();
+            highlight.enabled = false;
+        }
     }
 }

@@ -8,15 +8,18 @@ namespace Alpha.Dol
     public class HexMapEditor : MonoBehaviour
     {
         [SerializeField] public HexGrid HexGrid;
+        [SerializeField] public Material TerrainMaterial;
         private int _activeColorIndex;
         private int _activeElevation;
         private int _activeWaterLevel;
         private HexCell _previousCell;
+        public HexCell _searchFromCell;
         private HexDirection _dragDirection;
         private bool _isDrag;
         private bool _colorMode;
         private bool _evaluationMode;
         private bool _waterMode;
+        private bool _editorMode;
         private OptionalToggle _riverMode = OptionalToggle.Invalid;
         private OptionalToggle _roadMode = OptionalToggle.Invalid;
 
@@ -29,7 +32,8 @@ namespace Alpha.Dol
         private void Awake()
         {
             SelectColor(0);
-            
+            TerrainMaterial.DisableKeyword("GRID_ON");
+            _editorMode = true;
         }
 
         private void Update()
@@ -44,13 +48,25 @@ namespace Alpha.Dol
             }
         }
 
-        private void HandleInput()
+        private HexCell GetCellUnderCursor()
         {
             var inputRay = Camera.main.ScreenPointToRay(Input.mousePosition);
             if (Physics.Raycast(inputRay, out RaycastHit hitInfo))
             {
-                var cell = HexGrid.GetCell(hitInfo.point);
-                if (_previousCell != null && _previousCell != cell)
+                return HexGrid.GetCell(hitInfo.point);
+            }
+            else
+            {
+                return null;
+            }
+        }
+        
+        private void HandleInput()
+        {
+            var cell = GetCellUnderCursor();
+            if (!cell)
+            {
+                if (!_previousCell && _previousCell != cell)
                 {
                     ValidateDrag(cell);
                 }
@@ -58,7 +74,25 @@ namespace Alpha.Dol
                 {
                     _isDrag = false;
                 }
-                EditCell(cell);
+
+                if (_editorMode)
+                {
+                    EditCell(cell);
+                }
+                else if (Input.GetKey(KeyCode.LeftShift))
+                {
+                    if (!_searchFromCell)
+                    {
+                        _searchFromCell.DisableHighlight();
+                    }
+
+                    _searchFromCell = cell;
+                    _searchFromCell.EnableHighLight(Color.blue);
+                }
+                else if (!_searchFromCell && _searchFromCell != cell)
+                {
+                    HexGrid.FindPath(_searchFromCell, cell);
+                }
 
                 _previousCell = cell;
             }
@@ -196,6 +230,24 @@ namespace Alpha.Dol
                 reader.Dispose();
                 Debug.Log("Load map success");
             }
+        }
+
+        public void ShowGrid(bool show)
+        {
+            if (show)
+            {
+                TerrainMaterial.EnableKeyword("GRID_ON");
+            }
+            else
+            {
+                TerrainMaterial.DisableKeyword("GRID_ON");
+            }
+        }
+
+        public void SetEditMode(bool active)
+        {
+            _editorMode = active;
+            HexGrid.ShowUI(!active);
         }
     }
 }
